@@ -1,11 +1,11 @@
 ---
 name: find-skills
-description: Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill.
+description: Helps users discover and install agent skills when they ask questions like "how do I do X", "find a skill for X", "is there a skill that can...", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist as an installable skill. Also handles managing existing installs: use it whenever the user wants to update, upgrade, refresh, reinstall, or remove already-installed skills ("update my skills", "upgrade the pdf skill", "is my skill outdated?").
 ---
 
 # Find Skills
 
-This skill helps you discover and install skills from the open agent skills ecosystem.
+This skill helps you discover, install, and update skills from the open agent skills ecosystem.
 It uses the `skills` CLI if available and falls back to `nix run` for Nix users.
 
 ## When to Use This Skill
@@ -18,6 +18,7 @@ Use this skill when the user:
 - Expresses interest in extending agent capabilities
 - Wants to search for tools, templates, or workflows
 - Mentions they wish they had help with a specific domain (design, testing, deployment, etc.)
+- Wants to update, upgrade, or reinstall skills they already have installed
 
 ## What is the Skills CLI?
 
@@ -29,7 +30,8 @@ If `skills` is not on PATH, run it via `nix run` instead, e.g.: `nix run "nixpkg
 
 - `skills find <query> [--owner <owner>]` - Search for skills by keyword, optionally scoped to a GitHub owner. Always pass an explicit query: without one, `find` launches an interactive TUI that hangs in non-interactive shells.
 - `skills add <package>` - Install a skill from GitHub or other sources
-- `skills update` - Update all installed skills
+- `skills list -g` - List globally installed skills (`--json` for machine-readable output)
+- `skills update [skills...]` - Update all installed skills to their latest versions, or only the named ones. Scope with `-g` (global only) or `-p` (project only); `-y` skips the scope prompt. Caution: `update` ignores `--help` and performs the update immediately — never run it speculatively just to inspect its options.
 
 **Browse skills at:** https://skills.sh/
 
@@ -138,6 +140,35 @@ If the user wants to proceed with the home-manager or NixOS option:
          };
        }
      ```
+
+## Updating Installed Skills
+
+First figure out how the skill was installed — CLI-managed and Nix-managed skills are updated differently. `skills list -g` shows what is installed globally via the CLI; Nix-managed skills only appear in the home-manager/NixOS configuration.
+
+### CLI-managed skills
+
+```bash
+skills update              # update all (auto-detects scope: project if in one, else global)
+skills update -g -y        # update all global skills without prompts
+skills update -g <skill>   # update one specific skill
+```
+
+If the user asks to reinstall or repair a broken install, re-run `skills add <owner/repo@skill> -g -y` for it.
+
+### home-manager / NixOS-managed skills
+
+The `skills` CLI cannot update these: their sources are pinned declaratively by a fetcher's revision and hash. Updating means bumping that pin:
+
+1. Regenerate the fetcher with `nurl` against the latest upstream state:
+   `nix run nixpkgs#nurl -- github:<owner>/<repo>`
+2. Replace the existing source expression in `skillSources.<repo>` with the generated output (new `rev` + SRI `hash`).
+3. Rebuild and switch (e.g. `home-manager switch`).
+
+Notes:
+
+- Because skills from the same repo share one entry in `skillSources`, a single bump updates all of them.
+- If `nurl` fails, fall back to computing the new SRI hash with the `nix-hash` skill if available (e.g. `nix flake prefetch github:<owner>/<repo>`), then update `rev` and `hash` in the fetcher expression by hand.
+- A stale hash fails the build with a mismatch error — that error message contains the correct hash ("got:"), which can be used directly, but prefer regenerating with tooling over hand-copying when possible.
 
 ## Common Skill Categories
 
