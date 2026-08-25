@@ -1,0 +1,59 @@
+{
+  "skill_name": "nix-flake",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "hey! i just cloned my friend's project — it's a little rust cli. never used nix myself but everyone keeps saying dev shells are great. can you get me set up so i can start hacking on it?",
+      "expected_output": "Agent notices the repo has no flake.nix while setting up, creates one at the repo root using the mapAttrs-over-legacyPackages pattern with a Rust toolchain dev shell (rustc, cargo, clippy, rustfmt, rust-analyzer), no flake-utils input, and verifies the flake evaluates.",
+      "files": [],
+      "assertions": [
+        "flake.nix exists at the repository root",
+        "flake.nix is syntactically valid Nix (nix-instantiate --parse succeeds)",
+        "flake evaluates successfully (nix flake show lists devShells output)",
+        "No flake-utils anywhere: flake.nix does not reference numtide/flake-utils and flake.lock contains no flake-utils node",
+        "Uses builtins.mapAttrs over inputs.nixpkgs.legacyPackages instead of hardcoded per-system sets or a helper library",
+        "nixpkgs input is locked in flake.lock to a concrete revision",
+        ".envrc added at repo root with exactly 'use flake' followed by 'dotenv'",
+        "Dev shell provides the full Rust toolchain: cargo, rustc, clippy, rustfmt, rust-analyzer",
+        "cargo build succeeds inside nix develop",
+        "Agent verified the setup works (evidence of running build/test commands)"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "We're onboarding new contributors to this repo. Add a flake.nix with a development shell so they can just run `nix develop` and have everything they need.",
+      "expected_output": "A flake.nix at the repo root with a Go toolchain dev shell (go, gopls/gotools), built on the official default template pattern (mapAttrs over nixpkgs.legacyPackages), nixpkgs pinned via ref, verified to evaluate.",
+      "files": [],
+      "assertions": [
+        "flake.nix exists at the repository root",
+        "flake.nix is syntactically valid Nix (nix-instantiate --parse succeeds)",
+        "flake evaluates successfully (nix flake show lists devShells output)",
+        "No flake-utils anywhere: flake.nix does not reference numtide/flake-utils and flake.lock contains no flake-utils node",
+        "Uses builtins.mapAttrs over inputs.nixpkgs.legacyPackages instead of hardcoded per-system sets or a helper library",
+        "nixpkgs input is locked in flake.lock to a concrete revision",
+        ".envrc added at repo root with exactly 'use flake' followed by 'dotenv'",
+        "Dev shell provides the Go toolchain: go plus gopls or gotools",
+        "go build ./... succeeds inside nix develop"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "This repo still has an old shell.nix from before we adopted flakes. Could you give it a proper flake.nix? Same tools as before please.",
+      "expected_output": "A flake.nix whose dev shell carries over the tools from the existing shell.nix (python311 with packages black, rich), using the mapAttrs-over-legacyPackages pattern, with the old shell.nix left in place unless asked otherwise.",
+      "files": [],
+      "assertions": [
+        "flake.nix exists at the repository root",
+        "flake.nix is syntactically valid Nix (nix-instantiate --parse succeeds)",
+        "flake evaluates successfully (nix flake show lists devShells output)",
+        "No flake-utils anywhere: flake.nix does not reference numtide/flake-utils and flake.lock contains no flake-utils node",
+        "Uses builtins.mapAttrs over inputs.nixpkgs.legacyPackages instead of hardcoded per-system sets or a helper library",
+        "nixpkgs input is locked in flake.lock to a concrete revision",
+        ".envrc added at repo root with exactly 'use flake' followed by 'dotenv'",
+        "Dev shell carries over all tools from the old shell.nix: python311, black, and rich",
+        "import rich succeeds inside nix develop (rich is importable, e.g. via python311.withPackages)",
+        "black runs inside nix develop",
+        "Old shell.nix is still present and unmodified"
+      ]
+    }
+  ]
+}
