@@ -21,7 +21,7 @@ Use this skill when the user:
 
 ## What is the Skills CLI?
 
-The Skills CLI (`skills"`) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.
+The Skills CLI (`skills`) is the package manager for the open agent skills ecosystem. Skills are modular packages that extend agent capabilities with specialized knowledge, workflows, and tools.
 
 If `skills` is not available in the CLI, it should be called via `nix run`, e.g.: `nix run "nixpkgs#skills" -- update`.
 
@@ -98,13 +98,44 @@ Learn more: https://skills.sh/vercel-labs/agent-skills/react-best-practices
 
 ### Step 6: Offer to Install
 
-If the user wants to proceed, you can install the skill for them:
+Offer 2 installation options:
+
+- Install via `skills` CLI
+- Install via home-manager or NixOS options
+
+If the user wants to proceed with the `skills` CLI option, you can install the skill for them:
 
 ```bash
 skills add <owner/repo@skill> -g -y
 ```
 
 The `-g` flag installs globally (user-level) and `-y` skips confirmation prompts.
+
+If the user wants to proceed with the home-manager or NixOS option:
+
+1. Identify the Nix file where agent skills are configured
+   - common home-manager options: `programs.{antigravity-cli,claude-code,codex,crush,github-copilot-cli,opencode}.skills`
+2. If the existing configuration cannot be identified, ask the user for help.
+3. Add a new attr to the `skills` attrset. The addition should follow existing conventions, but should usually look similar to:
+   ```nix
+     let
+       skillSources = {
+         <repo> = pkgs.fetchFromGitHub {
+           owner = "<owner>";
+           repo = "<repo>";
+           rev = "<rev>";
+           hash = "<sri-hash>";
+         };
+       };
+     in {
+       programs.opencode = {
+         skills = {
+           "<skill>" = "${skillSources.<repo>}/skills/<skill>";
+         };
+       };
+     }
+   ```
+   Note: the example above assumes `programs.opencode.enable` is already set elsewhere in your configuration.
 
 ## Common Skill Categories
 
