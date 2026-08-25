@@ -113,12 +113,13 @@ The `-g` flag installs globally (user-level) and `-y` skips confirmation prompts
 
 If the user wants to proceed with the home-manager or NixOS option:
 
-1. Identify the Nix file where agent skills are configured
+1. Identify all AI agents and the Nix file(s) where they are configured
    - common home-manager options: `programs.{antigravity-cli,claude-code,codex,crush,github-copilot-cli,opencode}.skills`
 2. If the existing configuration cannot be identified, ask the user for help.
-3. Add a new attr to the `skills` attrset.
+3. Add a new attr to the `skills` attrsets of all used AI agents.
    - The addition should follow existing conventions.
    - Using `pkgs.fetchFromGitHub` is preferred over inlining the skill.
+   - Avoid code duplication by using `skillSources` & `skills` variables.
    - This is the preferred structure that should be followed, especially when no existing `skills` option for the AI agent exists:
      ```nix
        let
