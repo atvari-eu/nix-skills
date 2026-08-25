@@ -116,26 +116,29 @@ If the user wants to proceed with the home-manager or NixOS option:
 1. Identify the Nix file where agent skills are configured
    - common home-manager options: `programs.{antigravity-cli,claude-code,codex,crush,github-copilot-cli,opencode}.skills`
 2. If the existing configuration cannot be identified, ask the user for help.
-3. Add a new attr to the `skills` attrset. The addition should follow existing conventions, but should usually look similar to:
-   ```nix
-     let
-       skillSources = {
-         <repo> = pkgs.fetchFromGitHub {
-           owner = "<owner>";
-           repo = "<repo>";
-           rev = "<rev>";
-           hash = "<sri-hash>";
+3. Add a new attr to the `skills` attrset.
+   - The addition should follow existing conventions.
+   - Using `pkgs.fetchFromGitHub` is preferred over inlining the skill.
+   - This is the preferred structure that should be followed, especially when no existing `skills` option for the AI agent exists:
+     ```nix
+       let
+         skillSources = {
+           <repo> = pkgs.fetchFromGitHub {
+             owner = "<owner>";
+             repo = "<repo>";
+             rev = "<rev>";
+             hash = "<sri-hash>";
+           };
          };
-       };
-     in {
-       programs.opencode = {
-         skills = {
-           "<skill>" = "${skillSources.<repo>}/skills/<skill>";
+       in {
+         programs.opencode = {
+           # ...
+           skills = {
+             "<skill>" = "${skillSources.<repo>}/skills/<skill>";
+           };
          };
-       };
-     }
-   ```
-   Note: the example above assumes `programs.opencode.enable` is already set elsewhere in your configuration.
+       }
+     ```
 
 ## Common Skill Categories
 
