@@ -1,0 +1,50 @@
+{
+  "skill_name": "nix-init",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Can you package https://github.com/ynqa/logu for me? It extracts patterns from unstructured log messages. I want to add it to my personal flake so I can install it on NixOS. Please make sure it actually builds.",
+      "expected_output": "A working logu.nix using rustPlatform.buildRustPackage with fetchFromGitHub src pinned to a real tag, prefetched sha256 SRI hashes for src and cargoHash, correct meta (license mit, description, mainProgram), verified by an actual successful nix-build and binary smoke test.",
+      "files": [],
+      "assertions": [
+        "Generated file is valid Nix (nix-instantiate --parse succeeds)",
+        "Package uses rustPlatform.buildRustPackage with pname 'logu'",
+        "Source is fetched via fetchFromGitHub from ynqa/logu at a tag/rev consistent with the package version",
+        "Source hash and cargo dependency hashes are concrete SRI sha256 values (no lib.fakeHash or placeholder hashes left)",
+        "meta includes license mit, description, homepage, and mainProgram",
+        "Derivation instantiates against nixpkgs (callPackage evaluation succeeds)",
+        "Full build succeeds and the logu binary reports the packaged version"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I'd like to contribute doggo from github.com/mr-karan/doggo to nixpkgs — it's a command-line DNS client I use every day. Generate the package following the pkgs/by-name conventions and check that it builds.",
+      "expected_output": "package.nix at a pkgs/by-name/do/doggo layout using buildGoModule, vendorHash prefetched, RFC 140 compliant structure with finalAttrs/updateScript/meta (gpl3 license), verified by building the derivation.",
+      "files": [],
+      "assertions": [
+        "package.nix is located at pkgs/by-name/do/doggo/package.nix (RFC 140 layout)",
+        "File is valid Nix (nix-instantiate --parse succeeds)",
+        "Uses buildGoModule with a concrete vendorHash (SRI sha256, no placeholders)",
+        "Source fetched via fetchFromGitHub from mr-karan/doggo at a tag/rev consistent with the version",
+        "meta includes a gpl3 license, description, homepage, and mainProgram",
+        "Derivation instantiates against nixpkgs (callPackage evaluation succeeds)",
+        "Build succeeds and doggo --help runs successfully showing usage"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "hey i need https://github.com/Textualize/trogon as a nix derivation for a project im working on, its a python lib that turns click CLIs into TUIs. can u generate one? just warn me if something looks off",
+      "expected_output": "A trogon package using python3Packages.buildPythonPackage (library, not application), pyproject = true, inferred build-system/dependencies, real SRI hashes from GitHub source, with the agent noting anything suspicious about the generated output.",
+      "files": [],
+      "assertions": [
+        "File is valid Nix (nix-instantiate --parse succeeds)",
+        "Uses python3Packages.buildPythonPackage (library semantics), not buildPythonApplication — the user asked for a library",
+        "Source fetched from the user-provided GitHub repo Textualize/trogon via fetchFromGitHub, not silently substituted with fetchPypi",
+        "Concrete SRI sha256 source hash (no lib.fakeHash or placeholder values)",
+        "pyproject = true with inferred build-system and dependencies present",
+        "No spurious mainProgram attribute claiming this library is an application",
+        "Build succeeds including pythonImportsCheck so that importing trogon works"
+      ]
+    }
+  ]
+}
