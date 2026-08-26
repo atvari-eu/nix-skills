@@ -1,0 +1,56 @@
+{
+  "skill_name": "terranix",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I want to manage my Hetzner Cloud infra with nix instead of writing terraform HCL. Set me up with terranix and OpenTofu: one small debian server (cx23 in nbg1) plus an ssh key resource, provider pinned, and make sure everything actually validates before you hand it back.",
+      "expected_output": "A flake.nix wiring github:terranix/terranix (nixpkgs follows) with terranixConfiguration over ./config.nix, a config.nix declaring required_providers (hetznercloud/hcloud), a sensitive hcloud_token variable referenced via escaped \\${var.hcloud_token}, the two resources, generated config.tf.json, and tofu init + validate passing. Generated file gitignored, no hand-written .tf files.",
+      "files": [],
+      "assertions": [
+        "config.nix exists at repo root and is valid Nix (nix-instantiate --parse succeeds)",
+        "flake.nix exists with a terranix input whose nixpkgs follows the main nixpkgs input",
+        "No hand-written .tf or .tofu HCL files were created — resources live only in Nix",
+        "terranix configuration evaluates to config.tf.json (via nix build or terranix CLI)",
+        "Generated JSON is valid and contains literal '${var.hcloud_token}' (escaping correct)",
+        "variable.hcloud_token has sensitive set true and type string",
+        "terraform.required_providers pins hetznercloud/hcloud with a version constraint",
+        "Both resources present: hcloud_server and hcloud_ssh_key, with ssh_keys referencing ${hcloud_ssh_key.<name>.id}",
+        "No indented-string artifacts in reference values (no stray newlines/whitespace inside '${...}' expressions)",
+        "tofu init -input=false and tofu validate both succeed",
+        ".gitignore excludes .terraform/, tfstate files, and the generated config.tf.json"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "our team is going all-in on nix so we want our terraform code expressed as terranix modules too. can you convert this main.tf? keep every resource address identical so nobody's state gets messed up, and prove the conversion is faithful.",
+      "expected_output": "config.nix faithfully mirroring main.tf (same variable/provider/resource names, public_net as nested attrset), references preserved as Terraform interpolations, old .tf removed after verification, tofu validate passing with unchanged resource addresses.",
+      "files": ["main.tf"],
+      "assertions": [
+        "config.nix exists and is valid Nix (nix-instantiate --parse succeeds)",
+        "All original blocks are represented: variable hcloud_token, provider hcloud, resources hcloud_ssh_key.admin and hcloud_server.web",
+        "Resource addresses are unchanged (resource.type.name pairs identical to main.tf) so state continuity is preserved",
+        "public_net nested block converted to nested attribute set with ipv4_enabled and ipv6_enabled",
+        "file(\"~/.ssh/id_ed25519.pub\") call preserved correctly in generated JSON without stray whitespace/newlines inside the expression",
+        "ssh_keys reference appears literally as ${hcloud_ssh_key.admin.id} in generated JSON",
+        "provider token references ${var.hcloud_token} literally in generated JSON",
+        "required_providers entry for hetznercloud/hcloud with version ~> 1.45 carried over",
+        "Agent verified equivalence via tofu (init + validate, ideally plan showing no changes)",
+        "Old main.tf is removed or explicitly left with a stated reason (no silent duplication of definitions)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "my terranix config suddenly stopped evaluating after i added these triggers — nix keeps saying \"undefined variable 'var'\" but var is clearly a terraform thing?? what gives. fix my config.nix please and double check tofu still accepts it",
+      "expected_output": "The agent diagnoses the Nix/Terraform ${} clash, escapes the interpolations ('\\${var.instance_type}' and '\\${local.region}') or replaces local.region with a plain Nix let binding, config evaluates again, and tofu init+validate pass.",
+      "files": ["broken-config.nix"],
+      "assertions": [
+        "Fixed config.nix evaluates successfully with terranix (JSON generation succeeds)",
+        "Generated JSON contains literal '${var.instance_type}' (correctly escaped for Terraform)",
+        "region_note resolves without error — either literal '${local.region}' in JSON or replaced by a plain Nix value",
+        "No Nix 'undefined variable' errors remain during evaluation",
+        "tofu init -input=false and tofu validate succeed on the generated JSON",
+        "null_resource.demo.triggers keys preserved (instance_type, region_note)"
+      ]
+    }
+  ]
+}
