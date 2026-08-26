@@ -10,6 +10,7 @@
 | [nix-flake](skills/nix-flake/SKILL.md) | Set up a reproducible Nix development environment (`flake.nix` + devshell) for any Git repository. |
 | [nix-hash](skills/nix-hash/SKILL.md) | Compute and convert SRI/hex/base32 Nix hashes; prefetching and fixed-output derivations. |
 | [nix-init](skills/nix-init/SKILL.md) | Generate Nix packages from repository URLs with [nix-init](https://github.com/nix-community/nix-init). |
+| [terranix](skills/terranix/SKILL.md) | Write OpenTofu/Terraform infrastructure-as-code in Nix with [terranix](https://terranix.org) instead of HCL. |
 
 ## Installation
 
