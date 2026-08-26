@@ -76,6 +76,11 @@ If the repo has no flake yet, the `nix-flake` skill covers setting one up.
 Upstream also ships a template:
 `nix flake init --template github:terranix/terranix-examples`.
 
+If resolving a branch ref like `nixos-unstable` fails with GitHub API errors
+(timeouts, empty responses — it happens regularly), pin an explicit revision
+instead: `github:nixos/nixpkgs/<rev>` fetches the tarball directly and skips
+the API entirely.
+
 ## Writing config.nix
 
 The attribute tree mirrors Terraform JSON top-level keys one-to-one:
