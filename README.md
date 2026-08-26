@@ -16,7 +16,7 @@
 Install individual skills via the `skills` CLI:
 
 ```console
-$ skills add felschr/nix-skills@nix-hash -g
+$ skills add atvari-eu/nix-skills@nix-hash -g
 ```
 
 Or via home-manager/NixOS:
